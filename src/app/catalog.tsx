@@ -44,7 +44,10 @@ export default function CatalogScreen() {
       setBooks(fallbackBooks);
     } else {
       setCategories(categoryResult.data || []);
-      setBooks(bookResult.data || []);
+      setBooks((bookResult.data || []).map(book => ({
+        ...book,
+        categories: Array.isArray(book.categories) ? book.categories[0] ?? null : book.categories,
+      })));
     }
     setLoading(false);
     setRefreshing(false);
