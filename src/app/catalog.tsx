@@ -1,6 +1,6 @@
+import { Dropdown } from '@/components/dropdown';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Picker } from '@react-native-picker/picker';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -12,6 +12,10 @@ const fallbackBooks: Book[] = [
   { id: -1, category_id: 1, title: 'Гаррі Поттер і філософський камінь', author: 'Дж. К. Ролінґ', pages: 320, cover_url: 'https://covers.openlibrary.org/b/isbn/9780747532699-L.jpg', summary: 'Історія хлопчика, який дізнається про магічний світ, знаходить друзів і починає навчання у Гоґвортсі.' },
   { id: -2, category_id: 2, title: 'Убивство у «Східному експресі»', author: 'Аґата Крісті', pages: 256, cover_url: 'https://covers.openlibrary.org/b/isbn/9780007119318-L.jpg', summary: 'Знаменитий детектив Еркюль Пуаро розслідує загадкове вбивство у потязі, що застряг у снігу.' },
   { id: -3, category_id: 3, title: 'Гордість і упередження', author: 'Джейн Остін', pages: 432, cover_url: 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg', summary: 'Класичний роман про родину Беннетів, суспільні очікування, кохання та перше враження.' },
+];
+
+const fallbackCategories: Category[] = [
+  { id: 1, name: 'Фентезі' }, { id: 2, name: 'Детектив' }, { id: 3, name: 'Класика' },
 ];
 
 export default function CatalogScreen() {
@@ -40,7 +44,7 @@ export default function CatalogScreen() {
     ]);
     if (categoryResult.error || bookResult.error) {
       setDbError('Не вдалося завантажити дані з Supabase. Перевірте .env та виконайте SQL із файлу supabase/lab6_setup.sql.');
-      setCategories([]);
+      setCategories(fallbackCategories);
       setBooks(fallbackBooks);
     } else {
       setCategories(categoryResult.data || []);
@@ -120,7 +124,7 @@ export default function CatalogScreen() {
         <TextInput style={styles.input} placeholder="URL обкладинки (необов’язково)" value={coverUrl} onChangeText={setCoverUrl} autoCapitalize="none" />
         <TextInput style={[styles.input, styles.multiline]} placeholder="Короткий опис" value={summary} onChangeText={setSummary} multiline />
         <Text style={styles.fieldLabel}>Категорія</Text>
-        <View style={styles.pickerWrap}><Picker selectedValue={newCategory} onValueChange={setNewCategory}><Picker.Item label="Без категорії" value="" />{categories.map(c => <Picker.Item key={c.id} label={c.name} value={String(c.id)} />)}</Picker></View>
+        <Dropdown title="Категорія книги" value={newCategory} onChange={setNewCategory} options={[{ label: 'Без категорії', value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]} />
         <Pressable style={styles.primaryButton} onPress={addBook}><Text style={styles.primaryButtonText}>Зберегти книгу</Text></Pressable>
       </View>}
       {user?.role === 'admin' && <View style={styles.categoryAdmin}>
@@ -128,7 +132,7 @@ export default function CatalogScreen() {
         <View style={styles.categoryRow}><TextInput style={[styles.input, { flex: 1, marginBottom: 0 }]} placeholder="Назва нової категорії" value={categoryName} onChangeText={setCategoryName} /><Pressable style={styles.primaryButton} onPress={addCategory}><Text style={styles.primaryButtonText}>Додати</Text></Pressable></View>
       </View>}
       <Text style={styles.fieldLabel}>Фільтр за категорією</Text>
-      <View style={styles.pickerWrap}><Picker selectedValue={selectedCategory} onValueChange={setSelectedCategory}><Picker.Item label="Усі категорії" value="all" />{categories.map(c => <Picker.Item key={c.id} label={c.name} value={String(c.id)} />)}</Picker></View>
+      <Dropdown title="Фільтр за категорією" value={selectedCategory} onChange={setSelectedCategory} options={[{ label: 'Усі категорії', value: 'all' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]} />
       {!!dbError && <View style={styles.notice}><Text style={styles.noticeText}>{dbError}</Text><Text style={styles.noticeSmall}>Поки що відображаються демонстраційні книги. Після налаштування бази даних з’являться записи з хмари.</Text></View>}
       {loading && <ActivityIndicator size="large" color="#6558d3" style={{ margin: 24 }} />}
       {!loading && visibleBooks.length === 0 && <Text style={styles.empty}>У цій категорії поки немає книг.</Text>}
